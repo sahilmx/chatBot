@@ -5,6 +5,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -13,6 +14,8 @@ import android.widget.Toast;
 import com.example.chatbot.Adapter.ChatRVAdapter;
 import com.example.chatbot.Models.ChatsModal;
 import com.example.chatbot.Models.MsgModal;
+import com.example.chatbot.Models.PostOfficeData;
+import com.example.chatbot.Models.pinCodeModal;
 import com.example.chatbot.Network.RetrofitApi;
 import com.example.chatbot.R;
 import com.example.chatbot.utils.cUtils;
@@ -52,9 +55,14 @@ public class MainActivity extends AppCompatActivity implements cUtils {
                 if(userMegEdt.getText().toString().isEmpty()){
                     Toast.makeText(MainActivity.this,"Please enter a messsage",Toast.LENGTH_SHORT).show();
                     return;
+                }else if(userMegEdt.getText().toString().length()==6 && TextUtils.isDigitsOnly(userMegEdt.getText().toString())){
+                    getDataFromPinCode(userMegEdt.getText().toString());
+                    chatsRV.scrollToPosition(chatsModalArrayList.size() - 1);
+
+                }else{
+                    getResponse(userMegEdt.getText().toString());
+                    chatsRV.scrollToPosition(chatsModalArrayList.size() - 1);
                 }
-                System.out.println("test" + userMegEdt.getText().toString());
-                getResponse(userMegEdt.getText().toString());
                 userMegEdt.setText("");
                 chatsRV.scrollToPosition(chatsModalArrayList.size() - 1);
 
@@ -62,7 +70,44 @@ public class MainActivity extends AppCompatActivity implements cUtils {
         });
 
     }
+    private  void getDataFromPinCode(String pinCode){
+        chatsModalArrayList.add(new ChatsModal(pinCode,USER_KEY));
+        chatRVAdapter.notifyDataSetChanged();
+        String url = "http://www.postalpincode.in/api/pincode/" + pinCode;
+        String BASE_URL= "http://www.postalpincode.in/";
+        Retrofit retrofit = new Retrofit.Builder().
+                baseUrl(BASE_URL).addConverterFactory(GsonConverterFactory.create())
+                .build();
+        RetrofitApi retrofitApi = retrofit.create(RetrofitApi.class);
+        Call<pinCodeModal> call = retrofitApi.getPincode(url);
+        call.enqueue(new Callback<pinCodeModal>() {
+            @Override
+            public void onResponse(Call<pinCodeModal> call, Response<pinCodeModal> response) {
+                if(response.isSuccessful()){
+                    if(response.body().getStatus().toString().equals("Success")){
+                        pinCodeModal modal=response.body();
+                        ArrayList<PostOfficeData> postOfficeDataList=modal.getPostOffice();
+                        String display = "Name: "+postOfficeDataList.get(0).getName()+"\n"+"District: "+postOfficeDataList.get(0).getDistrict()+"\n"+"District: "+postOfficeDataList.get(0).getDistrict()+"\n"+"Division: "+postOfficeDataList.get(0).getDivision()+"\n"+"Region: "+postOfficeDataList.get(0).getRegion()+"\n"+"Country: "+postOfficeDataList.get(0).getCountry()+"\n";
+                        chatsModalArrayList.add(new ChatsModal(display,BOT_KEY));
+                        chatRVAdapter.notifyDataSetChanged();
+                        chatsRV.scrollToPosition(chatsModalArrayList.size() - 1);
+                    }else{
+                        chatsModalArrayList.add(new ChatsModal(response.body().getMessage().toString(),BOT_KEY));
+                        chatRVAdapter.notifyDataSetChanged();
+                    }
 
+
+                }
+            }
+
+            @Override
+            public void onFailure(Call<pinCodeModal> call, Throwable t) {
+                chatsModalArrayList.add(new ChatsModal("Please Check your Pincode ",BOT_KEY));
+                chatRVAdapter.notifyDataSetChanged();
+            }
+        });
+
+    }
     private  void  getResponse(String  message){
         chatsModalArrayList.add(new ChatsModal(message,USER_KEY));
         chatRVAdapter.notifyDataSetChanged();
@@ -81,10 +126,8 @@ public class MainActivity extends AppCompatActivity implements cUtils {
         call.enqueue(new Callback<MsgModal>() {
             @Override
             public void onResponse(Call<MsgModal> call, Response<MsgModal> response) {
-                System.out.println("Testing app 7");
                 if(response.isSuccessful()){
                     MsgModal modal=response.body();
-                    System.out.println("Testing app 4");
                     chatsModalArrayList.add(new ChatsModal(modal.getCnt(),BOT_KEY));
                     chatRVAdapter.notifyDataSetChanged();
                     chatsRV.scrollToPosition(chatsModalArrayList.size() - 1);
@@ -94,13 +137,10 @@ public class MainActivity extends AppCompatActivity implements cUtils {
 
             @Override
             public void onFailure(Call<MsgModal> call, Throwable t) {
-                System.out.println("Testing app 6 "+ t);
-
                 chatsModalArrayList.add(new ChatsModal("Please revert your question ",BOT_KEY));
             chatRVAdapter.notifyDataSetChanged();
             }
         });
-        System.out.println("Testing app 5");
 
 
 

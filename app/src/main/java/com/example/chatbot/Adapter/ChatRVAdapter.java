@@ -32,11 +32,9 @@ public class ChatRVAdapter extends RecyclerView.Adapter {
         View view;
         // below code is to switch our
         // layout type along with view holder.
-        System.out.println("Testing chatsRV viewholder" + viewType);
         switch (viewType) {
             case 0:
                 // below line we are inflating user message layout.
-                System.out.println("Testing chatsRV viewholder case 0 ini ");
                 view = LayoutInflater.from(parent.getContext()).inflate(R.layout.user_msg_rv_item, parent, false);
 
                 return new UserViewHolder(view);
@@ -44,20 +42,11 @@ public class ChatRVAdapter extends RecyclerView.Adapter {
             case 1:
                 // below line we are inflating bot message layout.
                 view = LayoutInflater.from(parent.getContext()).inflate(R.layout.bot_msg_rv_item, parent, false);
-                System.out.println("Testing chatsRV viewholder case 1 ");
 
                 return new BotViewHolder(view);
 
-            default:
-                System.out.println("Testing chatsRV viewholder Default");
-                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.user_msg_rv_item, parent, false);
-                System.out.println("Testing chatsRV viewholder case 0 ");
-                return new UserViewHolder(view);
-
-
-
         }
-     //   return null;
+        return null;
     }
 
     @Override
